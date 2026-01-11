@@ -39,6 +39,8 @@ export const DEFAULT_MAP_LAYERS: MapLayers = {
   datacenters: false,
   protests: true,
   flights: false,
+  militaryFlights: false,
+  militaryVessels: false,
 };
 
 export const MONITOR_COLORS = [

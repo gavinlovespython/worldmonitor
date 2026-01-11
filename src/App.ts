@@ -10,7 +10,7 @@ import {
   DEFAULT_MAP_LAYERS,
   STORAGE_KEYS,
 } from '@/config';
-import { fetchCategoryFeeds, fetchMultipleStocks, fetchCrypto, fetchPredictions, fetchEarthquakes, fetchWeatherAlerts, fetchFredData, fetchInternetOutages, isOutagesConfigured, fetchAisSignals, initAisStream, getAisStatus, disconnectAisStream, isAisConfigured, fetchCableActivity, fetchProtestEvents, getProtestStatus, fetchFlightDelays, initDB, updateBaseline, calculateDeviation, addToSignalHistory, saveSnapshot, cleanOldSnapshots, analysisWorker } from '@/services';
+import { fetchCategoryFeeds, fetchMultipleStocks, fetchCrypto, fetchPredictions, fetchEarthquakes, fetchWeatherAlerts, fetchFredData, fetchInternetOutages, isOutagesConfigured, fetchAisSignals, initAisStream, getAisStatus, disconnectAisStream, isAisConfigured, fetchCableActivity, fetchProtestEvents, getProtestStatus, fetchFlightDelays, fetchMilitaryFlights, fetchMilitaryVessels, initMilitaryVesselStream, getMilitaryVesselStatus, isMilitaryVesselTrackingConfigured, initDB, updateBaseline, calculateDeviation, addToSignalHistory, saveSnapshot, cleanOldSnapshots, analysisWorker } from '@/services';
 import { buildMapUrl, debounce, loadFromStorage, parseMapUrlState, saveToStorage, ExportPanel, getCircuitBreakerCooldownInfo } from '@/utils';
 import type { ParsedMapUrlState } from '@/utils';
 import {
@@ -1012,6 +1012,8 @@ export class App {
     if (this.mapLayers.cables) tasks.push(this.loadCableActivity());
     if (this.mapLayers.protests) tasks.push(this.loadProtests());
     if (this.mapLayers.flights) tasks.push(this.loadFlightDelays());
+    if (this.mapLayers.militaryFlights) tasks.push(this.loadMilitaryFlights());
+    if (this.mapLayers.militaryVessels) tasks.push(this.loadMilitaryVessels());
 
     await Promise.all(tasks);
 
@@ -1046,6 +1048,12 @@ export class App {
           break;
         case 'flights':
           await this.loadFlightDelays();
+          break;
+        case 'militaryFlights':
+          await this.loadMilitaryFlights();
+          break;
+        case 'militaryVessels':
+          await this.loadMilitaryVessels();
           break;
       }
     } finally {
@@ -1353,6 +1361,45 @@ export class App {
     }
   }
 
+  private async loadMilitaryFlights(): Promise<void> {
+    try {
+      const { flights, clusters } = await fetchMilitaryFlights();
+      this.map?.setMilitaryFlights(flights, clusters);
+      this.map?.setLayerReady('militaryFlights', flights.length > 0);
+      this.statusPanel?.updateFeed('Military Flights', {
+        status: 'ok',
+        itemCount: flights.length,
+      });
+      this.statusPanel?.updateApi('OpenSky', { status: 'ok' });
+    } catch (error) {
+      this.map?.setLayerReady('militaryFlights', false);
+      this.statusPanel?.updateFeed('Military Flights', { status: 'error', errorMessage: String(error) });
+      this.statusPanel?.updateApi('OpenSky', { status: 'error' });
+    }
+  }
+
+  private async loadMilitaryVessels(): Promise<void> {
+    try {
+      // Initialize vessel stream if not already running
+      if (isMilitaryVesselTrackingConfigured()) {
+        initMilitaryVesselStream();
+      }
+
+      const { vessels, clusters } = await fetchMilitaryVessels();
+      this.map?.setMilitaryVessels(vessels, clusters);
+      this.map?.setLayerReady('militaryVessels', vessels.length > 0);
+
+      const status = getMilitaryVesselStatus();
+      this.statusPanel?.updateFeed('Military Vessels', {
+        status: status.connected ? 'ok' : 'warning',
+        itemCount: vessels.length,
+      });
+    } catch (error) {
+      this.map?.setLayerReady('militaryVessels', false);
+      this.statusPanel?.updateFeed('Military Vessels', { status: 'error', errorMessage: String(error) });
+    }
+  }
+
   private async loadFredData(): Promise<void> {
     const cbInfo = getCircuitBreakerCooldownInfo('FRED Economic');
     if (cbInfo.onCooldown) {
@@ -1449,5 +1496,12 @@ export class App {
     setInterval(() => {
       if (this.mapLayers.flights) this.loadFlightDelays();
     }, 10 * 60 * 1000);
+    // Military tracking - refresh every 2 minutes for flights, 5 minutes for vessels
+    setInterval(() => {
+      if (this.mapLayers.militaryFlights) this.loadMilitaryFlights();
+    }, 2 * 60 * 1000);
+    setInterval(() => {
+      if (this.mapLayers.militaryVessels) this.loadMilitaryVessels();
+    }, 5 * 60 * 1000);
   }
 }

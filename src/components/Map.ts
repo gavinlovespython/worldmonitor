@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
-import type { MapLayers, Hotspot, NewsItem, Earthquake, InternetOutage, RelatedAsset, AssetType, AisDisruptionEvent, AisDensityZone, CableAdvisory, RepairShip, SocialUnrestEvent, AirportDelayAlert } from '@/types';
+import type { MapLayers, Hotspot, NewsItem, Earthquake, InternetOutage, RelatedAsset, AssetType, AisDisruptionEvent, AisDensityZone, CableAdvisory, RepairShip, SocialUnrestEvent, AirportDelayAlert, MilitaryFlight, MilitaryVessel, MilitaryFlightCluster, MilitaryVesselCluster } from '@/types';
 import type { WeatherAlert } from '@/services/weather';
 import { getSeverityColor } from '@/services/weather';
 import {
@@ -80,6 +80,10 @@ export class MapComponent {
   private repairShips: RepairShip[] = [];
   private protests: SocialUnrestEvent[] = [];
   private flightDelays: AirportDelayAlert[] = [];
+  private militaryFlights: MilitaryFlight[] = [];
+  private militaryFlightClusters: MilitaryFlightCluster[] = [];
+  private militaryVessels: MilitaryVessel[] = [];
+  private militaryVesselClusters: MilitaryVesselCluster[] = [];
   private news: NewsItem[] = [];
   private popup: MapPopup;
   private onHotspotClick?: (hotspot: Hotspot) => void;
@@ -240,6 +244,7 @@ export class MapComponent {
     const layers: (keyof MapLayers)[] = [
       'conflicts', 'hotspots', 'sanctions', 'protests',  // geopolitical
       'bases', 'nuclear', 'irradiators',                 // military/strategic
+      'militaryFlights', 'militaryVessels',              // military tracking
       'cables', 'pipelines', 'outages', 'datacenters',   // infrastructure
       'ais', 'flights',                                   // transport
       'earthquakes', 'weather',                           // natural
@@ -248,6 +253,8 @@ export class MapComponent {
     ];
     const layerLabels: Partial<Record<keyof MapLayers, string>> = {
       ais: 'Ships',
+      militaryFlights: 'Mil Aircraft',
+      militaryVessels: 'Mil Vessels',
     };
 
     layers.forEach((layer) => {
@@ -1307,6 +1314,246 @@ export class MapComponent {
         this.overlays.appendChild(div);
       });
     }
+
+    // Military Flights (fighter jets, bombers, recon aircraft)
+    if (this.state.layers.militaryFlights) {
+      // Render individual flights
+      this.militaryFlights.forEach((flight) => {
+        const pos = projection([flight.lon, flight.lat]);
+        if (!pos) return;
+
+        const div = document.createElement('div');
+        div.className = `military-flight-marker ${flight.operator} ${flight.aircraftType}${flight.isInteresting ? ' interesting' : ''}`;
+        div.style.left = `${pos[0]}px`;
+        div.style.top = `${pos[1]}px`;
+
+        // Rotate icon based on heading
+        const icon = document.createElement('div');
+        icon.className = 'military-flight-icon';
+        icon.style.transform = `rotate(${flight.heading}deg)`;
+
+        // Different icons for different aircraft types
+        const iconMap: Record<string, string> = {
+          fighter: '✈️',
+          bomber: '💣',
+          transport: '🛩️',
+          tanker: '⛽',
+          awacs: '📡',
+          reconnaissance: '🔭',
+          helicopter: '🚁',
+          drone: '🛸',
+          patrol: '🔍',
+          special_ops: '⚔️',
+          vip: '🎖️',
+          unknown: '✈️',
+        };
+        icon.textContent = iconMap[flight.aircraftType] || '✈️';
+        div.appendChild(icon);
+
+        // Show callsign at higher zoom levels
+        if (this.state.zoom >= 3) {
+          const label = document.createElement('div');
+          label.className = 'military-flight-label';
+          label.textContent = flight.callsign;
+          div.appendChild(label);
+        }
+
+        // Show altitude indicator
+        if (flight.altitude > 0) {
+          const alt = document.createElement('div');
+          alt.className = 'military-flight-altitude';
+          alt.textContent = `FL${Math.round(flight.altitude / 100)}`;
+          div.appendChild(alt);
+        }
+
+        div.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const rect = this.container.getBoundingClientRect();
+          this.popup.show({
+            type: 'militaryFlight',
+            data: flight,
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
+          });
+        });
+
+        this.overlays.appendChild(div);
+
+        // Render flight track if available
+        if (flight.track && flight.track.length > 1 && this.state.zoom >= 2) {
+          const trackLine = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+          const points = flight.track
+            .map((p) => {
+              const pt = projection([p[1], p[0]]);
+              return pt ? `${pt[0]},${pt[1]}` : null;
+            })
+            .filter(Boolean)
+            .join(' ');
+
+          if (points) {
+            trackLine.setAttribute('points', points);
+            trackLine.setAttribute('class', `military-flight-track ${flight.operator}`);
+            trackLine.setAttribute('fill', 'none');
+            trackLine.setAttribute('stroke-width', '1.5');
+            trackLine.setAttribute('stroke-dasharray', '4,2');
+            this.svg.select('.overlays-svg').append(() => trackLine);
+          }
+        }
+      });
+
+      // Render flight clusters
+      this.militaryFlightClusters.forEach((cluster) => {
+        const pos = projection([cluster.lon, cluster.lat]);
+        if (!pos) return;
+
+        const div = document.createElement('div');
+        div.className = `military-cluster-marker flight-cluster ${cluster.activityType || 'unknown'}`;
+        div.style.left = `${pos[0]}px`;
+        div.style.top = `${pos[1]}px`;
+
+        const count = document.createElement('div');
+        count.className = 'cluster-count';
+        count.textContent = String(cluster.flightCount);
+        div.appendChild(count);
+
+        const label = document.createElement('div');
+        label.className = 'cluster-label';
+        label.textContent = cluster.name;
+        div.appendChild(label);
+
+        div.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const rect = this.container.getBoundingClientRect();
+          this.popup.show({
+            type: 'militaryFlightCluster',
+            data: cluster,
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
+          });
+        });
+
+        this.overlays.appendChild(div);
+      });
+    }
+
+    // Military Vessels (warships, carriers, submarines)
+    if (this.state.layers.militaryVessels) {
+      // Render individual vessels
+      this.militaryVessels.forEach((vessel) => {
+        const pos = projection([vessel.lon, vessel.lat]);
+        if (!pos) return;
+
+        const div = document.createElement('div');
+        div.className = `military-vessel-marker ${vessel.operator} ${vessel.vesselType}${vessel.isDark ? ' dark-vessel' : ''}${vessel.isInteresting ? ' interesting' : ''}`;
+        div.style.left = `${pos[0]}px`;
+        div.style.top = `${pos[1]}px`;
+
+        const icon = document.createElement('div');
+        icon.className = 'military-vessel-icon';
+        icon.style.transform = `rotate(${vessel.heading}deg)`;
+
+        // Different icons for vessel types
+        const iconMap: Record<string, string> = {
+          carrier: '🚢',
+          destroyer: '⚓',
+          frigate: '🛳️',
+          submarine: '🐋',
+          amphibious: '🚀',
+          patrol: '🚤',
+          auxiliary: '🛥️',
+          research: '🔬',
+          icebreaker: '🧊',
+          special: '⚡',
+          unknown: '🚢',
+        };
+        icon.textContent = iconMap[vessel.vesselType] || '🚢';
+        div.appendChild(icon);
+
+        // Dark vessel warning indicator
+        if (vessel.isDark) {
+          const darkIndicator = document.createElement('div');
+          darkIndicator.className = 'dark-vessel-indicator';
+          darkIndicator.textContent = '⚠️';
+          darkIndicator.title = 'AIS Signal Lost';
+          div.appendChild(darkIndicator);
+        }
+
+        // Show vessel name at higher zoom
+        if (this.state.zoom >= 3) {
+          const label = document.createElement('div');
+          label.className = 'military-vessel-label';
+          label.textContent = vessel.name;
+          div.appendChild(label);
+        }
+
+        div.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const rect = this.container.getBoundingClientRect();
+          this.popup.show({
+            type: 'militaryVessel',
+            data: vessel,
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
+          });
+        });
+
+        this.overlays.appendChild(div);
+
+        // Render vessel track if available
+        if (vessel.track && vessel.track.length > 1 && this.state.zoom >= 2) {
+          const trackLine = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+          const points = vessel.track
+            .map((p) => {
+              const pt = projection([p[1], p[0]]);
+              return pt ? `${pt[0]},${pt[1]}` : null;
+            })
+            .filter(Boolean)
+            .join(' ');
+
+          if (points) {
+            trackLine.setAttribute('points', points);
+            trackLine.setAttribute('class', `military-vessel-track ${vessel.operator}`);
+            trackLine.setAttribute('fill', 'none');
+            trackLine.setAttribute('stroke-width', '2');
+            this.svg.select('.overlays-svg').append(() => trackLine);
+          }
+        }
+      });
+
+      // Render vessel clusters
+      this.militaryVesselClusters.forEach((cluster) => {
+        const pos = projection([cluster.lon, cluster.lat]);
+        if (!pos) return;
+
+        const div = document.createElement('div');
+        div.className = `military-cluster-marker vessel-cluster ${cluster.activityType || 'unknown'}`;
+        div.style.left = `${pos[0]}px`;
+        div.style.top = `${pos[1]}px`;
+
+        const count = document.createElement('div');
+        count.className = 'cluster-count';
+        count.textContent = String(cluster.vesselCount);
+        div.appendChild(count);
+
+        const label = document.createElement('div');
+        label.className = 'cluster-label';
+        label.textContent = cluster.name;
+        div.appendChild(label);
+
+        div.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const rect = this.container.getBoundingClientRect();
+          this.popup.show({
+            type: 'militaryVesselCluster',
+            data: cluster,
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
+          });
+        });
+
+        this.overlays.appendChild(div);
+      });
+    }
   }
 
   private renderCountryLabels(projection: d3.GeoProjection): void {
@@ -2045,6 +2292,18 @@ export class MapComponent {
 
   public setFlightDelays(delays: AirportDelayAlert[]): void {
     this.flightDelays = delays;
+    this.render();
+  }
+
+  public setMilitaryFlights(flights: MilitaryFlight[], clusters: MilitaryFlightCluster[] = []): void {
+    this.militaryFlights = flights;
+    this.militaryFlightClusters = clusters;
+    this.render();
+  }
+
+  public setMilitaryVessels(vessels: MilitaryVessel[], clusters: MilitaryVesselCluster[] = []): void {
+    this.militaryVessels = vessels;
+    this.militaryVesselClusters = clusters;
     this.render();
   }
 

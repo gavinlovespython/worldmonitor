@@ -1,0 +1,386 @@
+import type { MilitaryAircraftType, MilitaryOperator, MilitaryVesselType } from '@/types';
+
+/**
+ * Military callsign prefixes and patterns for aircraft identification
+ * These are used to filter ADS-B data for military aircraft
+ */
+export interface CallsignPattern {
+  pattern: string;           // Regex pattern or prefix
+  operator: MilitaryOperator;
+  aircraftType?: MilitaryAircraftType;
+  description?: string;
+}
+
+// US Military callsign patterns
+export const US_MILITARY_CALLSIGNS: CallsignPattern[] = [
+  // USAF
+  { pattern: '^RCH', operator: 'usaf', aircraftType: 'transport', description: 'REACH - AMC transport' },
+  { pattern: '^REACH', operator: 'usaf', aircraftType: 'transport', description: 'REACH - AMC transport' },
+  { pattern: '^DUKE', operator: 'usaf', aircraftType: 'transport', description: 'DUKE - VIP transport' },
+  { pattern: '^SAM', operator: 'usaf', aircraftType: 'vip', description: 'Special Air Mission' },
+  { pattern: '^AF[12]', operator: 'usaf', aircraftType: 'vip', description: 'Air Force One/Two' },
+  { pattern: '^EXEC', operator: 'usaf', aircraftType: 'vip', description: 'Executive transport' },
+  { pattern: '^GOLD', operator: 'usaf', aircraftType: 'special_ops', description: 'Special operations' },
+  { pattern: '^KING', operator: 'usaf', aircraftType: 'tanker', description: 'KC-135/KC-46 tanker' },
+  { pattern: '^SHELL', operator: 'usaf', aircraftType: 'tanker', description: 'Tanker operations' },
+  { pattern: '^TEAL', operator: 'usaf', aircraftType: 'tanker', description: 'Tanker operations' },
+  { pattern: '^BOLT', operator: 'usaf', aircraftType: 'fighter', description: 'Fighter ops' },
+  { pattern: '^VIPER', operator: 'usaf', aircraftType: 'fighter', description: 'F-16 operations' },
+  { pattern: '^RAPTOR', operator: 'usaf', aircraftType: 'fighter', description: 'F-22 operations' },
+  { pattern: '^BONE', operator: 'usaf', aircraftType: 'bomber', description: 'B-1B operations' },
+  { pattern: '^DEATH', operator: 'usaf', aircraftType: 'bomber', description: 'B-2 operations' },
+  { pattern: '^DOOM', operator: 'usaf', aircraftType: 'bomber', description: 'B-52 operations' },
+  { pattern: '^SNTRY', operator: 'usaf', aircraftType: 'awacs', description: 'E-3 AWACS' },
+  { pattern: '^DRAGN', operator: 'usaf', aircraftType: 'reconnaissance', description: 'U-2 operations' },
+  { pattern: '^COBRA', operator: 'usaf', aircraftType: 'reconnaissance', description: 'RC-135 SIGINT' },
+  { pattern: '^RIVET', operator: 'usaf', aircraftType: 'reconnaissance', description: 'RC-135 variants' },
+  { pattern: '^OLIVE', operator: 'usaf', aircraftType: 'reconnaissance', description: 'RC-135 operations' },
+  { pattern: '^JAKE', operator: 'usaf', aircraftType: 'reconnaissance', description: 'E-8 JSTARS' },
+  { pattern: '^NCHO', operator: 'usaf', aircraftType: 'special_ops', description: 'MC-130 Specops' },
+  { pattern: '^SHADOW', operator: 'usaf', aircraftType: 'special_ops', description: 'Special operations' },
+  { pattern: '^EVAC', operator: 'usaf', aircraftType: 'transport', description: 'Aeromedical evacuation' },
+  { pattern: '^MOOSE', operator: 'usaf', aircraftType: 'transport', description: 'C-17 operations' },
+  { pattern: '^HERKY', operator: 'usaf', aircraftType: 'transport', description: 'C-130 operations' },
+
+  // US Navy
+  { pattern: '^NAVY', operator: 'usn', description: 'US Navy aircraft' },
+  { pattern: '^CNV', operator: 'usn', aircraftType: 'transport', description: 'Navy transport' },
+  { pattern: '^VRC', operator: 'usn', aircraftType: 'transport', description: 'Carrier onboard delivery' },
+  { pattern: '^TRIDENT', operator: 'usn', aircraftType: 'patrol', description: 'P-8 maritime patrol' },
+  { pattern: '^RED', operator: 'usn', aircraftType: 'patrol', description: 'P-8/P-3 operations' },
+  { pattern: '^BRONCO', operator: 'usn', aircraftType: 'fighter', description: 'F/A-18 operations' },
+
+  // US Marine Corps
+  { pattern: '^MARINE', operator: 'usmc', description: 'USMC aircraft' },
+  { pattern: '^HMX', operator: 'usmc', aircraftType: 'vip', description: 'Marine One squadron' },
+  { pattern: '^NIGHT', operator: 'usmc', aircraftType: 'vip', description: 'Nighthawk VIP transport' },
+
+  // US Army
+  { pattern: '^ARMY', operator: 'usa', description: 'US Army aircraft' },
+  { pattern: '^PAT', operator: 'usa', aircraftType: 'transport', description: 'Priority air transport' },
+  { pattern: '^DUSTOFF', operator: 'usa', aircraftType: 'helicopter', description: 'Medevac helicopters' },
+
+  // US Coast Guard
+  { pattern: '^COAST GUARD', operator: 'other', aircraftType: 'patrol', description: 'USCG aircraft' },
+  { pattern: '^CG[0-9]', operator: 'other', aircraftType: 'patrol', description: 'USCG aircraft' },
+
+  // Global Hawk / Drones
+  { pattern: '^FORTE', operator: 'usaf', aircraftType: 'drone', description: 'RQ-4 Global Hawk' },
+  { pattern: '^HAWK', operator: 'usaf', aircraftType: 'drone', description: 'Global Hawk drone' },
+  { pattern: '^REAPER', operator: 'usaf', aircraftType: 'drone', description: 'MQ-9 Reaper' },
+];
+
+// NATO/Allied callsign patterns
+export const NATO_ALLIED_CALLSIGNS: CallsignPattern[] = [
+  // Royal Air Force (UK)
+  { pattern: '^RRR', operator: 'raf', description: 'RAF aircraft' },
+  { pattern: '^ASCOT', operator: 'raf', aircraftType: 'transport', description: 'RAF transport' },
+  { pattern: '^RAFAIR', operator: 'raf', aircraftType: 'transport', description: 'RAF transport' },
+  { pattern: '^TARTAN', operator: 'raf', aircraftType: 'tanker', description: 'RAF tanker' },
+  { pattern: '^NATO', operator: 'nato', aircraftType: 'awacs', description: 'NATO AWACS' },
+
+  // Royal Navy (UK)
+  { pattern: '^RN', operator: 'rn', description: 'Royal Navy aircraft' },
+  { pattern: '^NAVY', operator: 'rn', description: 'RN aircraft' },
+
+  // French Air Force
+  { pattern: '^FAF', operator: 'faf', description: 'French Air Force' },
+  { pattern: '^CTM', operator: 'faf', aircraftType: 'transport', description: 'French AF transport' },
+  { pattern: '^FRENCH', operator: 'faf', description: 'French military' },
+
+  // German Air Force
+  { pattern: '^GAF', operator: 'gaf', description: 'German Air Force' },
+  { pattern: '^GERMAN', operator: 'gaf', description: 'German military' },
+
+  // Israeli Air Force
+  { pattern: '^IAF', operator: 'iaf', description: 'Israeli Air Force' },
+  { pattern: '^ELAL', operator: 'iaf', description: 'IAF transport (covers)' },
+];
+
+// Russian/Chinese callsign patterns (less common due to transponder usage)
+export const ADVERSARY_CALLSIGNS: CallsignPattern[] = [
+  // Russian Aerospace Forces
+  { pattern: '^RF', operator: 'vks', description: 'Russian Federation aircraft' },
+  { pattern: '^RFF', operator: 'vks', description: 'Russian AF' },
+  { pattern: '^RUSSIAN', operator: 'vks', description: 'Russian military' },
+
+  // Chinese PLA
+  { pattern: '^CCA', operator: 'plaaf', description: 'PLA Air Force' },
+  { pattern: '^CHH', operator: 'plan', description: 'PLA Navy Air' },
+  { pattern: '^CHINA', operator: 'plaaf', description: 'Chinese military' },
+];
+
+// All military callsign patterns combined
+export const ALL_MILITARY_CALLSIGNS: CallsignPattern[] = [
+  ...US_MILITARY_CALLSIGNS,
+  ...NATO_ALLIED_CALLSIGNS,
+  ...ADVERSARY_CALLSIGNS,
+];
+
+/**
+ * Military aircraft type codes (ICAO aircraft type designators)
+ * Used to identify military aircraft by their type code
+ */
+export const MILITARY_AIRCRAFT_TYPES: Record<string, { type: MilitaryAircraftType; name: string }> = {
+  // Fighters
+  'F15': { type: 'fighter', name: 'F-15 Eagle' },
+  'F16': { type: 'fighter', name: 'F-16 Fighting Falcon' },
+  'F18': { type: 'fighter', name: 'F/A-18 Hornet' },
+  'FA18': { type: 'fighter', name: 'F/A-18 Hornet' },
+  'F22': { type: 'fighter', name: 'F-22 Raptor' },
+  'F35': { type: 'fighter', name: 'F-35 Lightning II' },
+  'F117': { type: 'fighter', name: 'F-117 Nighthawk' },
+  'SU27': { type: 'fighter', name: 'Su-27 Flanker' },
+  'SU30': { type: 'fighter', name: 'Su-30 Flanker' },
+  'SU35': { type: 'fighter', name: 'Su-35 Flanker-E' },
+  'MIG29': { type: 'fighter', name: 'MiG-29 Fulcrum' },
+  'MIG31': { type: 'fighter', name: 'MiG-31 Foxhound' },
+  'EUFI': { type: 'fighter', name: 'Eurofighter Typhoon' },
+  'EF2K': { type: 'fighter', name: 'Eurofighter Typhoon' },
+  'RFAL': { type: 'fighter', name: 'Dassault Rafale' },
+  'J10': { type: 'fighter', name: 'J-10 Vigorous Dragon' },
+  'J11': { type: 'fighter', name: 'J-11 Flanker' },
+  'J20': { type: 'fighter', name: 'J-20 Mighty Dragon' },
+
+  // Bombers
+  'B52': { type: 'bomber', name: 'B-52 Stratofortress' },
+  'B1': { type: 'bomber', name: 'B-1B Lancer' },
+  'B1B': { type: 'bomber', name: 'B-1B Lancer' },
+  'B2': { type: 'bomber', name: 'B-2 Spirit' },
+  'TU95': { type: 'bomber', name: 'Tu-95 Bear' },
+  'TU160': { type: 'bomber', name: 'Tu-160 Blackjack' },
+  'TU22': { type: 'bomber', name: 'Tu-22M Backfire' },
+  'H6': { type: 'bomber', name: 'H-6 Badger' },
+
+  // Transports
+  'C130': { type: 'transport', name: 'C-130 Hercules' },
+  'C17': { type: 'transport', name: 'C-17 Globemaster III' },
+  'C5': { type: 'transport', name: 'C-5 Galaxy' },
+  'C5M': { type: 'transport', name: 'C-5M Super Galaxy' },
+  'C40': { type: 'transport', name: 'C-40 Clipper' },
+  'C32': { type: 'transport', name: 'C-32 (757)' },
+  'VC25': { type: 'vip', name: 'VC-25 Air Force One' },
+  'A400': { type: 'transport', name: 'A400M Atlas' },
+  'IL76': { type: 'transport', name: 'Il-76 Candid' },
+  'AN124': { type: 'transport', name: 'An-124 Ruslan' },
+  'AN225': { type: 'transport', name: 'An-225 Mriya' },
+  'Y20': { type: 'transport', name: 'Y-20 Kunpeng' },
+
+  // Tankers
+  'KC135': { type: 'tanker', name: 'KC-135 Stratotanker' },
+  'K35R': { type: 'tanker', name: 'KC-135R Stratotanker' },
+  'KC10': { type: 'tanker', name: 'KC-10 Extender' },
+  'KC46': { type: 'tanker', name: 'KC-46 Pegasus' },
+  'A330': { type: 'tanker', name: 'A330 MRTT' },
+  'A332': { type: 'tanker', name: 'A330 MRTT' },
+
+  // AWACS/AEW
+  'E3': { type: 'awacs', name: 'E-3 Sentry AWACS' },
+  'E3TF': { type: 'awacs', name: 'E-3 Sentry AWACS' },
+  'E7': { type: 'awacs', name: 'E-7 Wedgetail' },
+  'E2': { type: 'awacs', name: 'E-2 Hawkeye' },
+  'A50': { type: 'awacs', name: 'A-50 Mainstay' },
+  'KJ2000': { type: 'awacs', name: 'KJ-2000' },
+
+  // Reconnaissance
+  'RC135': { type: 'reconnaissance', name: 'RC-135 Rivet Joint' },
+  'R135': { type: 'reconnaissance', name: 'RC-135' },
+  'U2': { type: 'reconnaissance', name: 'U-2 Dragon Lady' },
+  'U2S': { type: 'reconnaissance', name: 'U-2S Dragon Lady' },
+  'EP3': { type: 'reconnaissance', name: 'EP-3 Aries' },
+  'E8': { type: 'reconnaissance', name: 'E-8 JSTARS' },
+  'WC135': { type: 'reconnaissance', name: 'WC-135 Constant Phoenix' },
+  'OC135': { type: 'reconnaissance', name: 'OC-135 Open Skies' },
+
+  // Maritime Patrol
+  'P8': { type: 'patrol', name: 'P-8 Poseidon' },
+  'P3': { type: 'patrol', name: 'P-3 Orion' },
+  'P1': { type: 'patrol', name: 'Kawasaki P-1' },
+
+  // Drones/UAV
+  'RQ4': { type: 'drone', name: 'RQ-4 Global Hawk' },
+  'GLHK': { type: 'drone', name: 'RQ-4 Global Hawk' },
+  'MQ9': { type: 'drone', name: 'MQ-9 Reaper' },
+  'MQ1': { type: 'drone', name: 'MQ-1 Predator' },
+  'RQ170': { type: 'drone', name: 'RQ-170 Sentinel' },
+  'MQ4C': { type: 'drone', name: 'MQ-4C Triton' },
+
+  // Special Operations
+  'MC130': { type: 'special_ops', name: 'MC-130 Combat Talon' },
+  'AC130': { type: 'special_ops', name: 'AC-130 Gunship' },
+  'CV22': { type: 'special_ops', name: 'CV-22 Osprey' },
+  'MV22': { type: 'special_ops', name: 'MV-22 Osprey' },
+
+  // Helicopters
+  'H60': { type: 'helicopter', name: 'UH-60 Black Hawk' },
+  'S70': { type: 'helicopter', name: 'UH-60 Black Hawk' },
+  'H47': { type: 'helicopter', name: 'CH-47 Chinook' },
+  'CH47': { type: 'helicopter', name: 'CH-47 Chinook' },
+  'AH64': { type: 'helicopter', name: 'AH-64 Apache' },
+  'H64': { type: 'helicopter', name: 'AH-64 Apache' },
+  'H1': { type: 'helicopter', name: 'AH-1 Cobra/Viper' },
+  'MI8': { type: 'helicopter', name: 'Mi-8 Hip' },
+  'MI24': { type: 'helicopter', name: 'Mi-24 Hind' },
+  'MI28': { type: 'helicopter', name: 'Mi-28 Havoc' },
+  'KA52': { type: 'helicopter', name: 'Ka-52 Alligator' },
+};
+
+/**
+ * ICAO 24-bit hex code ranges for military aircraft
+ * These help identify military aircraft even without callsigns
+ */
+export const MILITARY_HEX_RANGES: { start: string; end: string; operator: MilitaryOperator; country: string }[] = [
+  // United States Military
+  { start: 'AE0000', end: 'AFFFFF', operator: 'usaf', country: 'USA' },
+  // Note: Many US military aircraft use 'Mode S' codes in civilian ranges
+
+  // UK Military
+  { start: '43C000', end: '43CFFF', operator: 'raf', country: 'UK' },
+
+  // France Military
+  { start: '3A0000', end: '3AFFFF', operator: 'faf', country: 'France' },
+
+  // Germany Military
+  { start: '3F0000', end: '3FFFFF', operator: 'gaf', country: 'Germany' },
+];
+
+/**
+ * Known military vessel MMSI patterns and ranges
+ * MMSI format: MIDxxxxxx where MID is the Maritime Identification Digits
+ */
+export interface VesselPattern {
+  mmsiPrefix?: string;        // MMSI prefix to match
+  mmsiRange?: { start: number; end: number };
+  operator: MilitaryOperator | 'other';
+  country: string;
+  vesselType?: MilitaryVesselType;
+}
+
+// Military vessel MMSI patterns
+export const MILITARY_VESSEL_PATTERNS: VesselPattern[] = [
+  // US Navy vessels (various MMSI ranges)
+  { mmsiPrefix: '3699', operator: 'usn', country: 'USA', vesselType: 'destroyer' },
+  { mmsiPrefix: '369970', operator: 'usn', country: 'USA' },
+
+  // UK Royal Navy
+  { mmsiPrefix: '232', operator: 'rn', country: 'UK' },
+  { mmsiPrefix: '2320', operator: 'rn', country: 'UK' },
+
+  // Note: Many military vessels don't broadcast AIS or use obscured identities
+];
+
+/**
+ * Known naval vessel names and hull numbers for identification
+ */
+export interface KnownNavalVessel {
+  name: string;
+  hullNumber?: string;
+  mmsi?: string;
+  operator: MilitaryOperator | 'other';
+  country: string;
+  vesselType: MilitaryVesselType;
+  homePort?: string;
+}
+
+export const KNOWN_NAVAL_VESSELS: KnownNavalVessel[] = [
+  // US Aircraft Carriers
+  { name: 'USS Gerald R. Ford', hullNumber: 'CVN-78', operator: 'usn', country: 'USA', vesselType: 'carrier' },
+  { name: 'USS George H.W. Bush', hullNumber: 'CVN-77', operator: 'usn', country: 'USA', vesselType: 'carrier' },
+  { name: 'USS Ronald Reagan', hullNumber: 'CVN-76', operator: 'usn', country: 'USA', vesselType: 'carrier' },
+  { name: 'USS Harry S. Truman', hullNumber: 'CVN-75', operator: 'usn', country: 'USA', vesselType: 'carrier' },
+  { name: 'USS John C. Stennis', hullNumber: 'CVN-74', operator: 'usn', country: 'USA', vesselType: 'carrier' },
+  { name: 'USS George Washington', hullNumber: 'CVN-73', operator: 'usn', country: 'USA', vesselType: 'carrier' },
+  { name: 'USS Abraham Lincoln', hullNumber: 'CVN-72', operator: 'usn', country: 'USA', vesselType: 'carrier' },
+  { name: 'USS Theodore Roosevelt', hullNumber: 'CVN-71', operator: 'usn', country: 'USA', vesselType: 'carrier' },
+  { name: 'USS Carl Vinson', hullNumber: 'CVN-70', operator: 'usn', country: 'USA', vesselType: 'carrier' },
+  { name: 'USS Dwight D. Eisenhower', hullNumber: 'CVN-69', operator: 'usn', country: 'USA', vesselType: 'carrier' },
+  { name: 'USS Nimitz', hullNumber: 'CVN-68', operator: 'usn', country: 'USA', vesselType: 'carrier' },
+
+  // UK Carriers
+  { name: 'HMS Queen Elizabeth', hullNumber: 'R08', operator: 'rn', country: 'UK', vesselType: 'carrier' },
+  { name: 'HMS Prince of Wales', hullNumber: 'R09', operator: 'rn', country: 'UK', vesselType: 'carrier' },
+
+  // Chinese Carriers
+  { name: 'Liaoning', hullNumber: '16', operator: 'plan', country: 'China', vesselType: 'carrier' },
+  { name: 'Shandong', hullNumber: '17', operator: 'plan', country: 'China', vesselType: 'carrier' },
+  { name: 'Fujian', hullNumber: '18', operator: 'plan', country: 'China', vesselType: 'carrier' },
+
+  // Russian Carrier
+  { name: 'Admiral Kuznetsov', operator: 'vks', country: 'Russia', vesselType: 'carrier' },
+
+  // Notable Destroyers/Cruisers
+  { name: 'USS Zumwalt', hullNumber: 'DDG-1000', operator: 'usn', country: 'USA', vesselType: 'destroyer' },
+  { name: 'HMS Defender', hullNumber: 'D36', operator: 'rn', country: 'UK', vesselType: 'destroyer' },
+  { name: 'HMS Duncan', hullNumber: 'D37', operator: 'rn', country: 'UK', vesselType: 'destroyer' },
+
+  // Research/Intel Vessels
+  { name: 'USNS Victorious', hullNumber: 'T-AGOS-19', operator: 'usn', country: 'USA', vesselType: 'research' },
+  { name: 'USNS Impeccable', hullNumber: 'T-AGOS-23', operator: 'usn', country: 'USA', vesselType: 'research' },
+  { name: 'Yuan Wang', operator: 'plan', country: 'China', vesselType: 'research' },
+];
+
+/**
+ * Regions of interest for military activity monitoring
+ */
+export const MILITARY_HOTSPOTS = [
+  { name: 'Taiwan Strait', lat: 24.0, lon: 119.5, radius: 3, priority: 'high' },
+  { name: 'South China Sea', lat: 12.0, lon: 114.0, radius: 5, priority: 'high' },
+  { name: 'Korean Peninsula', lat: 38.5, lon: 127.5, radius: 3, priority: 'high' },
+  { name: 'Persian Gulf', lat: 26.5, lon: 52.0, radius: 4, priority: 'high' },
+  { name: 'Black Sea', lat: 43.5, lon: 34.0, radius: 4, priority: 'high' },
+  { name: 'Baltic Sea', lat: 58.0, lon: 20.0, radius: 4, priority: 'medium' },
+  { name: 'Eastern Mediterranean', lat: 34.5, lon: 33.0, radius: 3, priority: 'medium' },
+  { name: 'Sea of Japan', lat: 40.0, lon: 135.0, radius: 4, priority: 'medium' },
+  { name: 'Arctic Ocean', lat: 75.0, lon: 0.0, radius: 10, priority: 'medium' },
+  { name: 'Gulf of Aden', lat: 12.5, lon: 47.0, radius: 3, priority: 'medium' },
+] as const;
+
+/**
+ * Helper function to identify aircraft by callsign
+ */
+export function identifyByCallsign(callsign: string): CallsignPattern | undefined {
+  const normalized = callsign.toUpperCase().trim();
+
+  for (const pattern of ALL_MILITARY_CALLSIGNS) {
+    const regex = new RegExp(pattern.pattern, 'i');
+    if (regex.test(normalized)) {
+      return pattern;
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Helper function to identify aircraft by type code
+ */
+export function identifyByAircraftType(typeCode: string): { type: MilitaryAircraftType; name: string } | undefined {
+  const normalized = typeCode.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return MILITARY_AIRCRAFT_TYPES[normalized];
+}
+
+/**
+ * Helper to check if a hex code is in known military range
+ */
+export function isKnownMilitaryHex(hexCode: string): { operator: MilitaryOperator; country: string } | undefined {
+  const hex = hexCode.toUpperCase();
+  for (const range of MILITARY_HEX_RANGES) {
+    if (hex >= range.start && hex <= range.end) {
+      return { operator: range.operator, country: range.country };
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Check if vessel is near a military hotspot
+ */
+export function getNearbyHotspot(lat: number, lon: number): typeof MILITARY_HOTSPOTS[number] | undefined {
+  for (const hotspot of MILITARY_HOTSPOTS) {
+    const distance = Math.sqrt(Math.pow(lat - hotspot.lat, 2) + Math.pow(lon - hotspot.lon, 2));
+    if (distance <= hotspot.radius) {
+      return hotspot;
+    }
+  }
+  return undefined;
+}

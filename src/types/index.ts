@@ -331,6 +331,8 @@ export interface MapLayers {
   datacenters: boolean;
   protests: boolean;
   flights: boolean;
+  militaryFlights: boolean;
+  militaryVessels: boolean;
 }
 
 export interface AIDataCenter {
@@ -475,4 +477,133 @@ export interface MonitoredAirport {
   lat: number;
   lon: number;
   region: AirportRegion;
+}
+
+// Military Flight Tracking Types
+export type MilitaryAircraftType =
+  | 'fighter'           // F-15, F-16, F-22, F-35, Su-27, etc.
+  | 'bomber'            // B-52, B-1, B-2, Tu-95, etc.
+  | 'transport'         // C-130, C-17, Il-76, A400M, etc.
+  | 'tanker'            // KC-135, KC-10, KC-46, etc.
+  | 'awacs'             // E-3, E-7, A-50, etc.
+  | 'reconnaissance'    // RC-135, U-2, EP-3, etc.
+  | 'helicopter'        // UH-60, CH-47, Mi-8, etc.
+  | 'drone'             // RQ-4, MQ-9, etc.
+  | 'patrol'            // P-8, P-3, etc.
+  | 'special_ops'       // MC-130, CV-22, etc.
+  | 'vip'               // Government/executive transport
+  | 'unknown';
+
+export type MilitaryOperator =
+  | 'usaf'              // US Air Force
+  | 'usn'               // US Navy
+  | 'usmc'              // US Marine Corps
+  | 'usa'               // US Army
+  | 'raf'               // Royal Air Force (UK)
+  | 'rn'                // Royal Navy (UK)
+  | 'faf'               // French Air Force
+  | 'gaf'               // German Air Force
+  | 'plaaf'             // PLA Air Force (China)
+  | 'plan'              // PLA Navy (China)
+  | 'vks'               // Russian Aerospace Forces
+  | 'iaf'               // Israeli Air Force
+  | 'nato'              // NATO joint operations
+  | 'other';
+
+export interface MilitaryFlight {
+  id: string;
+  callsign: string;
+  hexCode: string;             // ICAO 24-bit address
+  registration?: string;
+  aircraftType: MilitaryAircraftType;
+  aircraftModel?: string;      // E.g., "F-35A", "C-17A"
+  operator: MilitaryOperator;
+  operatorCountry: string;
+  lat: number;
+  lon: number;
+  altitude: number;            // feet
+  heading: number;             // degrees
+  speed: number;               // knots
+  verticalRate?: number;       // feet/min
+  onGround: boolean;
+  squawk?: string;             // Transponder code
+  origin?: string;             // ICAO airport code
+  destination?: string;        // ICAO airport code
+  lastSeen: Date;
+  firstSeen?: Date;
+  track?: [number, number][];  // Historical positions for trail
+  confidence: 'high' | 'medium' | 'low';
+  isInteresting?: boolean;     // Flagged for unusual activity
+  note?: string;
+}
+
+export interface MilitaryFlightCluster {
+  id: string;
+  name: string;
+  lat: number;
+  lon: number;
+  flightCount: number;
+  flights: MilitaryFlight[];
+  dominantOperator?: MilitaryOperator;
+  activityType?: 'exercise' | 'patrol' | 'transport' | 'unknown';
+}
+
+// Military/Special Vessel Tracking Types
+export type MilitaryVesselType =
+  | 'carrier'           // Aircraft carrier
+  | 'destroyer'         // Destroyer/Cruiser
+  | 'frigate'           // Frigate/Corvette
+  | 'submarine'         // Submarine (when surfaced/detected)
+  | 'amphibious'        // LHD, LPD, LST
+  | 'patrol'            // Coast guard, patrol boats
+  | 'auxiliary'         // Supply ships, tankers
+  | 'research'          // Intelligence gathering, research vessels
+  | 'icebreaker'        // Military icebreakers
+  | 'special'           // Special mission vessels
+  | 'unknown';
+
+export interface MilitaryVessel {
+  id: string;
+  mmsi: string;
+  name: string;
+  vesselType: MilitaryVesselType;
+  hullNumber?: string;         // E.g., "DDG-51", "CVN-78"
+  operator: MilitaryOperator | 'other';
+  operatorCountry: string;
+  lat: number;
+  lon: number;
+  heading: number;
+  speed: number;               // knots
+  course?: number;
+  destination?: string;
+  lastAisUpdate: Date;
+  aisGapMinutes?: number;      // Time since last AIS signal
+  isDark?: boolean;            // AIS disabled/suspicious
+  nearChokepoint?: string;     // If near strategic waterway
+  nearBase?: string;           // If near known naval base
+  track?: [number, number][];  // Historical positions
+  confidence: 'high' | 'medium' | 'low';
+  isInteresting?: boolean;
+  note?: string;
+}
+
+export interface MilitaryVesselCluster {
+  id: string;
+  name: string;
+  lat: number;
+  lon: number;
+  vesselCount: number;
+  vessels: MilitaryVessel[];
+  region?: string;
+  activityType?: 'exercise' | 'deployment' | 'transit' | 'unknown';
+}
+
+// Combined military activity summary
+export interface MilitaryActivitySummary {
+  flights: MilitaryFlight[];
+  vessels: MilitaryVessel[];
+  flightClusters: MilitaryFlightCluster[];
+  vesselClusters: MilitaryVesselCluster[];
+  activeOperations: number;
+  lastUpdate: Date;
 }

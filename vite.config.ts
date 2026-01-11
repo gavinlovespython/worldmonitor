@@ -375,6 +375,30 @@ export default defineConfig({
           });
         },
       },
+      // OpenSky Network - Aircraft tracking (military flight detection)
+      '/api/opensky': {
+        target: 'https://opensky-network.org/api',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api\/opensky/, ''),
+        configure: (proxy) => {
+          proxy.on('error', (err) => {
+            console.log('OpenSky proxy error:', err.message);
+          });
+        },
+      },
+      // ADS-B Exchange - Military aircraft tracking (backup/supplement)
+      '/api/adsb-exchange': {
+        target: 'https://adsbexchange.com/api',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api\/adsb-exchange/, ''),
+        configure: (proxy) => {
+          proxy.on('error', (err) => {
+            console.log('ADS-B Exchange proxy error:', err.message);
+          });
+        },
+      },
     },
   },
 });

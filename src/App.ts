@@ -1484,9 +1484,9 @@ export class App {
     setInterval(() => {
       if (this.mapLayers.flights) this.loadFlightDelays();
     }, 10 * 60 * 1000);
-    // Military tracking - refresh every 2 minutes
+    // Military tracking - refresh every 5 minutes (OpenSky rate limits)
     setInterval(() => {
       if (this.mapLayers.military) this.loadMilitary();
-    }, 2 * 60 * 1000);
+    }, 5 * 60 * 1000);
   }
 }

@@ -131,7 +131,8 @@ export const FEEDS: Record<string, Feed[]> = {
     { name: 'Hugging Face', url: rss('https://huggingface.co/blog/feed.xml') },
     { name: 'ArXiv AI', url: rss('https://export.arxiv.org/rss/cs.AI') },
     { name: 'VentureBeat AI', url: rss('https://venturebeat.com/feed/') },
-    { name: 'OpenAI News', url: rss('https://openai.com/news/rss.xml') },
+    // OpenAI blocks proxied requests, use Google News instead
+    { name: 'OpenAI News', url: rss('https://news.google.com/rss/search?q=site:openai.com&hl=en-US&gl=US&ceid=US:en') },
   ],
   finance: [
     { name: 'CNBC', url: rss('https://www.cnbc.com/id/100003114/device/rss/rss.html') },

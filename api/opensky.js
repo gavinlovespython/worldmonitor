@@ -3,6 +3,18 @@ export const config = { runtime: 'edge' };
 // Token cache for OAuth2
 let tokenCache = { token: null, expiresAt: 0 };
 
+// Fetch with timeout
+async function fetchWithTimeout(url, options, timeoutMs = 15000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    return response;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function getAccessToken() {
   const clientId = process.env.OPENSKY_CLIENT_ID;
   const clientSecret = process.env.OPENSKY_CLIENT_SECRET;
@@ -15,7 +27,7 @@ async function getAccessToken() {
   }
 
   try {
-    const response = await fetch('https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token', {
+    const response = await fetchWithTimeout('https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -25,7 +37,7 @@ async function getAccessToken() {
         client_id: clientId,
         client_secret: clientSecret,
       }),
-    });
+    }, 5000); // 5s timeout for auth
 
     if (!response.ok) return null;
 
@@ -61,12 +73,12 @@ export default async function handler(req) {
     // Get OAuth token if credentials configured
     const token = await getAccessToken();
 
-    const response = await fetch(openskyUrl, {
+    const response = await fetchWithTimeout(openskyUrl, {
       headers: {
         'Accept': 'application/json',
         ...(token && { 'Authorization': `Bearer ${token}` }),
       },
-    });
+    }, 12000); // 12s timeout for data fetch
 
     if (response.status === 429) {
       return new Response(JSON.stringify({ error: 'Rate limited', time: Date.now(), states: null }), {
@@ -85,8 +97,13 @@ export default async function handler(req) {
       },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Failed to fetch data', time: Date.now(), states: null }), {
-      status: 500,
+    const isTimeout = error.name === 'AbortError';
+    return new Response(JSON.stringify({
+      error: isTimeout ? 'Request timeout' : 'Failed to fetch data',
+      time: Date.now(),
+      states: null
+    }), {
+      status: isTimeout ? 504 : 500,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   }

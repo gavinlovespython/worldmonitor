@@ -322,17 +322,16 @@ export const KNOWN_NAVAL_VESSELS: KnownNavalVessel[] = [
 /**
  * Regions of interest for military activity monitoring
  */
+// Consolidated regions to reduce API calls (max 4 queries)
 export const MILITARY_HOTSPOTS = [
-  { name: 'Taiwan Strait', lat: 24.0, lon: 119.5, radius: 3, priority: 'high' },
-  { name: 'South China Sea', lat: 12.0, lon: 114.0, radius: 5, priority: 'high' },
-  { name: 'Korean Peninsula', lat: 38.5, lon: 127.5, radius: 3, priority: 'high' },
-  { name: 'Persian Gulf', lat: 26.5, lon: 52.0, radius: 4, priority: 'high' },
-  { name: 'Black Sea', lat: 43.5, lon: 34.0, radius: 4, priority: 'high' },
-  { name: 'Baltic Sea', lat: 58.0, lon: 20.0, radius: 4, priority: 'medium' },
-  { name: 'Eastern Mediterranean', lat: 34.5, lon: 33.0, radius: 3, priority: 'medium' },
-  { name: 'Sea of Japan', lat: 40.0, lon: 135.0, radius: 4, priority: 'medium' },
-  { name: 'Arctic Ocean', lat: 75.0, lon: 0.0, radius: 10, priority: 'medium' },
-  { name: 'Gulf of Aden', lat: 12.5, lon: 47.0, radius: 3, priority: 'medium' },
+  // East Asia: Taiwan + SCS + Korea + Japan Sea (combined)
+  { name: 'East Asia', lat: 28.0, lon: 125.0, radius: 18, priority: 'high' },
+  // Middle East: Persian Gulf + Aden + Mediterranean (combined)
+  { name: 'Middle East', lat: 28.0, lon: 42.0, radius: 15, priority: 'high' },
+  // Europe: Black Sea + Baltic (combined)
+  { name: 'Europe Theater', lat: 52.0, lon: 28.0, radius: 15, priority: 'medium' },
+  // Keep Arctic separate (large but low activity)
+  { name: 'Arctic', lat: 75.0, lon: 0.0, radius: 10, priority: 'low' },
 ] as const;
 
 /**

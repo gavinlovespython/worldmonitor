@@ -11,7 +11,7 @@ import {
 const OPENSKY_BASE_URL = '/api/opensky';
 
 // Cache configuration
-const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes - match refresh interval
 let flightCache: { data: MilitaryFlight[]; timestamp: number } | null = null;
 
 // Track flight history for trails
@@ -24,7 +24,7 @@ const breaker = createCircuitBreaker<{ flights: MilitaryFlight[]; clusters: Mili
   name: 'Military Flight Tracking',
   maxFailures: 3,
   cooldownMs: 5 * 60 * 1000, // 5 minute cooldown
-  cacheTtlMs: 2 * 60 * 1000, // 2 minute cache
+  cacheTtlMs: 5 * 60 * 1000, // 5 minute cache
 });
 
 // OpenSky API returns arrays in this order:

@@ -1,5 +1,17 @@
 export const config = { runtime: 'edge' };
 
+// Fetch with timeout
+async function fetchWithTimeout(url, options, timeoutMs = 10000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    return response;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 // Allowed RSS feed domains for security
 const ALLOWED_DOMAINS = [
   'feeds.bbci.co.uk',
@@ -66,12 +78,12 @@ export default async function handler(req) {
       });
     }
 
-    const response = await fetch(feedUrl, {
+    const response = await fetchWithTimeout(feedUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; WorldMonitor/1.0)',
         'Accept': 'application/rss+xml, application/xml, text/xml, */*',
       },
-    });
+    }, 8000); // 8s timeout
 
     const data = await response.text();
     return new Response(data, {
@@ -83,8 +95,9 @@ export default async function handler(req) {
       },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Failed to fetch feed' }), {
-      status: 500,
+    const isTimeout = error.name === 'AbortError';
+    return new Response(JSON.stringify({ error: isTimeout ? 'Feed timeout' : 'Failed to fetch feed' }), {
+      status: isTimeout ? 504 : 500,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   }

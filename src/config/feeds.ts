@@ -30,7 +30,7 @@ export const SOURCE_TIERS: Record<string, number> = {
   'Guardian World': 2,
   'Guardian ME': 2,
   'NPR News': 2,
-  'CNN Middle East': 2,
+  'CNN World': 2,
   'CNBC': 2,
   'MarketWatch': 2,
   'Al Jazeera': 2,
@@ -65,8 +65,7 @@ export const SOURCE_TIERS: Record<string, number> = {
   'SEC': 3,
   'MIT Tech Review': 3,
   'Ars Technica': 3,
-  'Brookings': 3,
-  'CSIS': 3,
+  'Atlantic Council': 3,
   'Foreign Affairs': 3,
   'Layoffs.fyi': 3,
 
@@ -102,13 +101,13 @@ export const SOURCE_TYPES: Record<string, SourceType> = {
   'Defense One': 'intel', 'Breaking Defense': 'intel', 'The War Zone': 'intel',
   'Defense News': 'intel', 'Janes': 'intel', 'Bellingcat': 'intel', 'Krebs Security': 'intel',
   'Foreign Policy': 'intel', 'The Diplomat': 'intel',
-  'Brookings': 'intel', 'CSIS': 'intel', 'Foreign Affairs': 'intel',
+  'Atlantic Council': 'intel', 'Foreign Affairs': 'intel',
 
   // Mainstream outlets
   'BBC World': 'mainstream', 'BBC Middle East': 'mainstream',
   'Guardian World': 'mainstream', 'Guardian ME': 'mainstream',
   'NPR News': 'mainstream', 'Al Jazeera': 'mainstream',
-  'CNN Middle East': 'mainstream', 'Politico': 'mainstream', 'The Telegraph': 'mainstream',
+  'CNN World': 'mainstream', 'Politico': 'mainstream', 'The Telegraph': 'mainstream',
 
   // Market/Finance
   'CNBC': 'market', 'MarketWatch': 'market', 'Yahoo Finance': 'market',
@@ -140,7 +139,7 @@ export const FEEDS: Record<string, Feed[]> = {
     { name: 'BBC Middle East', url: rss('https://feeds.bbci.co.uk/news/world/middle_east/rss.xml') },
     { name: 'Al Jazeera', url: rss('https://www.aljazeera.com/xml/rss/all.xml') },
     { name: 'Guardian ME', url: rss('https://www.theguardian.com/world/middleeast/rss') },
-    { name: 'CNN Middle East', url: railwayRss('https://rss.cnn.com/rss/edition_meast.rss') },
+    { name: 'CNN World', url: rss('http://rss.cnn.com/rss/cnn_world.rss') },
   ],
   tech: [
     { name: 'Hacker News', url: rss('https://hnrss.org/frontpage') },
@@ -181,8 +180,7 @@ export const FEEDS: Record<string, Feed[]> = {
   ],
   thinktanks: [
     { name: 'Foreign Policy', url: rss('https://foreignpolicy.com/feed/') },
-    { name: 'Brookings', url: rss('https://www.brookings.edu/feeds/rss/research/') },
-    { name: 'CSIS', url: rss('https://www.csis.org/analysis/feed') },
+    { name: 'Atlantic Council', url: rss('https://www.atlanticcouncil.org/feed/') },
     { name: 'Foreign Affairs', url: rss('https://www.foreignaffairs.com/rss.xml') },
   ],
 };

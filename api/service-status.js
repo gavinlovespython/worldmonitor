@@ -1,20 +1,24 @@
 export const config = { runtime: 'edge' };
 
 // Major tech services and their status page endpoints
+// Most use Statuspage.io which has a standard /api/v2/status.json endpoint
 const SERVICES = [
   // Cloud Providers
-  { id: 'aws', name: 'AWS', url: 'https://health.aws.amazon.com/health/status', category: 'cloud' },
-  { id: 'azure', name: 'Azure', url: 'https://status.azure.com/en-us/status', category: 'cloud' },
-  { id: 'gcp', name: 'Google Cloud', url: 'https://status.cloud.google.com/', category: 'cloud' },
+  { id: 'aws', name: 'AWS', statusPage: 'https://health.aws.amazon.com/health/status', customParser: 'aws', category: 'cloud' },
+  { id: 'azure', name: 'Azure', statusPage: 'https://azure.status.microsoft/en-us/status/feed/', customParser: 'rss', category: 'cloud' },
+  { id: 'gcp', name: 'Google Cloud', statusPage: 'https://status.cloud.google.com/incidents.json', customParser: 'gcp', category: 'cloud' },
   { id: 'cloudflare', name: 'Cloudflare', statusPage: 'https://www.cloudflarestatus.com/api/v2/status.json', category: 'cloud' },
   { id: 'vercel', name: 'Vercel', statusPage: 'https://www.vercel-status.com/api/v2/status.json', category: 'cloud' },
   { id: 'netlify', name: 'Netlify', statusPage: 'https://www.netlifystatus.com/api/v2/status.json', category: 'cloud' },
+  { id: 'digitalocean', name: 'DigitalOcean', statusPage: 'https://status.digitalocean.com/api/v2/status.json', category: 'cloud' },
 
   // Developer Tools
   { id: 'github', name: 'GitHub', statusPage: 'https://www.githubstatus.com/api/v2/status.json', category: 'dev' },
   { id: 'gitlab', name: 'GitLab', statusPage: 'https://status.gitlab.com/api/v2/status.json', category: 'dev' },
   { id: 'npm', name: 'npm', statusPage: 'https://status.npmjs.org/api/v2/status.json', category: 'dev' },
   { id: 'docker', name: 'Docker Hub', statusPage: 'https://www.dockerstatus.com/api/v2/status.json', category: 'dev' },
+  { id: 'bitbucket', name: 'Bitbucket', statusPage: 'https://bitbucket.status.atlassian.com/api/v2/status.json', category: 'dev' },
+  { id: 'circleci', name: 'CircleCI', statusPage: 'https://status.circleci.com/api/v2/status.json', category: 'dev' },
 
   // Communication
   { id: 'slack', name: 'Slack', statusPage: 'https://status.slack.com/api/v2.0.0/current', category: 'comm' },
@@ -23,12 +27,16 @@ const SERVICES = [
 
   // AI Services
   { id: 'openai', name: 'OpenAI', statusPage: 'https://status.openai.com/api/v2/status.json', category: 'ai' },
-  { id: 'anthropic', name: 'Anthropic', url: 'https://status.anthropic.com/', category: 'ai' },
+  { id: 'anthropic', name: 'Anthropic', statusPage: 'https://status.anthropic.com/api/v2/status.json', category: 'ai' },
+  { id: 'huggingface', name: 'Hugging Face', statusPage: 'https://status.huggingface.co/api/v2/status.json', category: 'ai' },
+  { id: 'replicate', name: 'Replicate', statusPage: 'https://status.replicate.com/api/v2/status.json', category: 'ai' },
 
   // SaaS
   { id: 'stripe', name: 'Stripe', statusPage: 'https://status.stripe.com/api/v2/status.json', category: 'saas' },
   { id: 'twilio', name: 'Twilio', statusPage: 'https://status.twilio.com/api/v2/status.json', category: 'saas' },
   { id: 'datadog', name: 'Datadog', statusPage: 'https://status.datadoghq.com/api/v2/status.json', category: 'saas' },
+  { id: 'pagerduty', name: 'PagerDuty', statusPage: 'https://status.pagerduty.com/api/v2/status.json', category: 'saas' },
+  { id: 'sentry', name: 'Sentry', statusPage: 'https://status.sentry.io/api/v2/status.json', category: 'saas' },
 ];
 
 // Statuspage.io API returns status like: none, minor, major, critical
@@ -57,12 +65,46 @@ async function checkStatusPage(service) {
 
   try {
     const response = await fetch(service.statusPage, {
-      headers: { 'Accept': 'application/json' },
-      signal: AbortSignal.timeout(5000),
+      headers: {
+        'Accept': service.customParser === 'rss' ? 'application/xml' : 'application/json',
+        'User-Agent': 'WorldMonitor/1.0 StatusChecker',
+      },
+      signal: AbortSignal.timeout(8000),
     });
 
     if (!response.ok) {
-      return { ...service, status: 'unknown', description: 'API unreachable' };
+      return { ...service, status: 'unknown', description: `HTTP ${response.status}` };
+    }
+
+    // Handle custom parsers
+    if (service.customParser === 'gcp') {
+      const data = await response.json();
+      // GCP incidents.json returns array of incidents
+      const activeIncidents = Array.isArray(data) ? data.filter(i =>
+        i.end === undefined || new Date(i.end) > new Date()
+      ) : [];
+      if (activeIncidents.length === 0) {
+        return { ...service, status: 'operational', description: 'All services operational' };
+      }
+      const severity = activeIncidents.some(i => i.severity === 'high') ? 'outage' : 'degraded';
+      return { ...service, status: severity, description: `${activeIncidents.length} active incident(s)` };
+    }
+
+    if (service.customParser === 'aws') {
+      // AWS status page is complex HTML - assume operational if reachable
+      return { ...service, status: 'operational', description: 'Status page reachable' };
+    }
+
+    if (service.customParser === 'rss') {
+      // Azure RSS feed - check if there are recent items (incidents)
+      const text = await response.text();
+      const hasRecentIncident = text.includes('<item>') &&
+        (text.includes('degradation') || text.includes('outage') || text.includes('incident'));
+      return {
+        ...service,
+        status: hasRecentIncident ? 'degraded' : 'operational',
+        description: hasRecentIncident ? 'Recent incidents reported' : 'No recent incidents'
+      };
     }
 
     const data = await response.json();
@@ -85,7 +127,7 @@ async function checkStatusPage(service) {
 
     return { ...service, status, description };
   } catch (error) {
-    return { ...service, status: 'unknown', description: error.message };
+    return { ...service, status: 'unknown', description: error.message || 'Request failed' };
   }
 }
 

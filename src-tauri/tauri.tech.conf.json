@@ -12,6 +12,12 @@
   },
   "bundle": {
     "shortDescription": "Tech Monitor desktop app",
-    "longDescription": "Tech Monitor desktop app for real-time AI and technology intelligence."
+    "longDescription": "Tech Monitor desktop app for real-time AI and technology intelligence.",
+    "targets": [
+      "app",
+      "dmg",
+      "nsis",
+      "msi"
+    ]
   }
 }

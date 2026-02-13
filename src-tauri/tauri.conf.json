@@ -28,7 +28,12 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": [
+      "app",
+      "dmg",
+      "nsis",
+      "msi"
+    ],
     "category": "Productivity",
     "shortDescription": "World Monitor desktop app (supports World and Tech variants)",
     "longDescription": "World Monitor desktop app for real-time global intelligence. Build with VITE_VARIANT=tech to package Tech Monitor branding and dataset defaults.",
@@ -38,6 +43,10 @@
       "sidecar/local-api-server.mjs",
       "../data",
       "../src/config"
-    ]
+    ],
+    "windows": {
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "http://timestamp.digicert.com"
+    }
   }
 }

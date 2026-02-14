@@ -10,7 +10,7 @@ test('rejects missing or invalid video ids', async () => {
   const missing = await handler(makeRequest());
   assert.equal(missing.status, 400);
 
-  const invalid = await handler(makeRequest('?videoId=bad')); 
+  const invalid = await handler(makeRequest('?videoId=bad'));
   assert.equal(invalid.status, 400);
 });
 
@@ -20,9 +20,16 @@ test('returns embeddable html for valid video id', async () => {
   assert.equal(response.headers.get('content-type')?.includes('text/html'), true);
 
   const html = await response.text();
-  assert.equal(html.includes('https://www.youtube.com/embed/iEpJwprxDdk'), true);
-  assert.equal(html.includes('autoplay=0'), true);
-  assert.equal(html.includes('mute=1'), true);
-  assert.equal(html.includes('origin=https%3A%2F%2Fworldmonitor.app'), true);
-  assert.equal(html.includes('widget_referrer=https%3A%2F%2Fworldmonitor.app'), true);
+  assert.equal(html.includes("videoId:'iEpJwprxDdk'"), true);
+  assert.equal(html.includes("host:'https://www.youtube-nocookie.com'"), true);
+  assert.equal(html.includes('autoplay:0'), true);
+  assert.equal(html.includes('mute:1'), true);
+  assert.equal(html.includes("origin:'https://worldmonitor.app'"), true);
+  assert.equal(html.includes('postMessage'), true);
+});
+
+test('accepts custom origin parameter', async () => {
+  const response = await handler(makeRequest('?videoId=iEpJwprxDdk&origin=http://127.0.0.1:46123'));
+  const html = await response.text();
+  assert.equal(html.includes("origin:'http://127.0.0.1:46123'"), true);
 });

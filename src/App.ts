@@ -2943,48 +2943,54 @@ export class App {
 
   private async loadMarkets(): Promise<void> {
     try {
-      // Stocks
-      const stocks = await fetchMultipleStocks(MARKET_SYMBOLS, {
+      const stocksResult = await fetchMultipleStocks(MARKET_SYMBOLS, {
         onBatch: (partialStocks) => {
           this.latestMarkets = partialStocks;
           (this.panels['markets'] as MarketPanel).renderMarkets(partialStocks);
         },
       });
-      this.latestMarkets = stocks;
-      (this.panels['markets'] as MarketPanel).renderMarkets(stocks);
-      this.statusPanel?.updateApi('Finnhub', { status: 'ok' });
 
-      // Sectors
-      const sectors = await fetchMultipleStocks(
-        SECTORS.map((s) => ({ ...s, display: s.name })),
-        {
-          onBatch: (partialSectors) => {
-            (this.panels['heatmap'] as HeatmapPanel).renderHeatmap(
-              partialSectors.map((s) => ({ name: s.name, change: s.change }))
+      if (stocksResult.skipped) {
+        const msg = 'FINNHUB_API_KEY not configured — add in Settings';
+        this.panels['markets']?.showConfigError(msg);
+        this.panels['heatmap']?.showConfigError(msg);
+        this.panels['commodities']?.showConfigError(msg);
+        this.statusPanel?.updateApi('Finnhub', { status: 'error' });
+      } else {
+        this.latestMarkets = stocksResult.data;
+        (this.panels['markets'] as MarketPanel).renderMarkets(stocksResult.data);
+        this.statusPanel?.updateApi('Finnhub', { status: 'ok' });
+
+        const sectorsResult = await fetchMultipleStocks(
+          SECTORS.map((s) => ({ ...s, display: s.name })),
+          {
+            onBatch: (partialSectors) => {
+              (this.panels['heatmap'] as HeatmapPanel).renderHeatmap(
+                partialSectors.map((s) => ({ name: s.name, change: s.change }))
+              );
+            },
+          }
+        );
+        (this.panels['heatmap'] as HeatmapPanel).renderHeatmap(
+          sectorsResult.data.map((s) => ({ name: s.name, change: s.change }))
+        );
+
+        const commoditiesResult = await fetchMultipleStocks(COMMODITIES, {
+          onBatch: (partialCommodities) => {
+            (this.panels['commodities'] as CommoditiesPanel).renderCommodities(
+              partialCommodities.map((c) => ({
+                display: c.display,
+                price: c.price,
+                change: c.change,
+                sparkline: c.sparkline,
+              }))
             );
           },
-        }
-      );
-      (this.panels['heatmap'] as HeatmapPanel).renderHeatmap(
-        sectors.map((s) => ({ name: s.name, change: s.change }))
-      );
-
-      // Commodities
-      const commodities = await fetchMultipleStocks(COMMODITIES, {
-        onBatch: (partialCommodities) => {
-          (this.panels['commodities'] as CommoditiesPanel).renderCommodities(
-            partialCommodities.map((c) => ({
-              display: c.display,
-              price: c.price,
-              change: c.change,
-              sparkline: c.sparkline,
-            }))
-          );
-        },
-      });
-      (this.panels['commodities'] as CommoditiesPanel).renderCommodities(
-        commodities.map((c) => ({ display: c.display, price: c.price, change: c.change, sparkline: c.sparkline }))
-      );
+        });
+        (this.panels['commodities'] as CommoditiesPanel).renderCommodities(
+          commoditiesResult.data.map((c) => ({ display: c.display, price: c.price, change: c.change, sparkline: c.sparkline }))
+        );
+      }
     } catch {
       this.statusPanel?.updateApi('Finnhub', { status: 'error' });
     }
@@ -3811,7 +3817,13 @@ export class App {
 
   private async loadFirmsData(): Promise<void> {
     try {
-      const { regions, totalCount } = await fetchAllFires(1);
+      const fireResult = await fetchAllFires(1);
+      if (fireResult.skipped) {
+        this.panels['satellite-fires']?.showConfigError('NASA_FIRMS_API_KEY not configured — add in Settings');
+        this.statusPanel?.updateApi('FIRMS', { status: 'error' });
+        return;
+      }
+      const { regions, totalCount } = fireResult;
       if (totalCount > 0) {
         const flat = flattenFires(regions);
         const stats = computeRegionStats(regions);

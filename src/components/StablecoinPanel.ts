@@ -80,6 +80,10 @@ export class StablecoinPanel extends Panel {
     }
   }
 
+  private isUpstreamUnavailable(): boolean {
+    return this.data?.unavailable === true;
+  }
+
   private renderPanel(): void {
     if (this.loading) {
       this.showLoading('Loading stablecoins...');
@@ -88,6 +92,11 @@ export class StablecoinPanel extends Panel {
 
     if (this.error || !this.data) {
       this.showError(this.error || 'No data');
+      return;
+    }
+
+    if (this.isUpstreamUnavailable()) {
+      this.showError('Upstream API unavailable — will retry automatically');
       return;
     }
 

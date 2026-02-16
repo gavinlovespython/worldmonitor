@@ -18,6 +18,14 @@ interface FinnhubQuote {
 interface FinnhubResponse {
   quotes: FinnhubQuote[];
   error?: string;
+  skipped?: boolean;
+  reason?: string;
+}
+
+export interface MarketFetchResult {
+  data: MarketData[];
+  skipped?: boolean;
+  reason?: string;
 }
 
 interface YahooFinanceResponse {
@@ -59,7 +67,7 @@ let lastSuccessfulResults: MarketData[] = [];
 
 async function fetchFromFinnhub(
   symbols: Array<{ symbol: string; name: string; display: string }>
-): Promise<MarketData[]> {
+): Promise<MarketFetchResult> {
   const symbolList = symbols.map(s => s.symbol);
   const url = API_URLS.finnhub(symbolList);
 
@@ -68,19 +76,23 @@ async function fetchFromFinnhub(
 
     if (!response.ok) {
       console.warn(`[Markets] Finnhub returned ${response.status}`);
-      return [];
+      return { data: [] };
     }
 
     const data: FinnhubResponse = await response.json();
 
+    if (data.skipped) {
+      return { data: [], skipped: true, reason: data.reason || 'FINNHUB_API_KEY not configured' };
+    }
+
     if (data.error) {
       console.warn(`[Markets] Finnhub error: ${data.error}`);
-      return [];
+      return { data: [] };
     }
 
     const symbolMap = new Map(symbols.map(s => [s.symbol, s]));
 
-    return data.quotes
+    const results = data.quotes
       .filter(q => !q.error && q.price > 0)
       .map(q => {
         const info = symbolMap.get(q.symbol);
@@ -92,9 +104,10 @@ async function fetchFromFinnhub(
           change: q.changePercent,
         };
       });
+    return { data: results };
   } catch (error) {
     console.error('[Markets] Finnhub fetch failed:', error);
-    return [];
+    return { data: [] };
   }
 }
 
@@ -132,21 +145,24 @@ export async function fetchMultipleStocks(
   options: {
     onBatch?: (results: MarketData[]) => void;
   } = {}
-): Promise<MarketData[]> {
-  // Split symbols into Finnhub-compatible and Yahoo-only
+): Promise<MarketFetchResult> {
   const finnhubSymbols = symbols.filter(s => !YAHOO_ONLY_SYMBOLS.has(s.symbol));
   const yahooSymbols = symbols.filter(s => YAHOO_ONLY_SYMBOLS.has(s.symbol));
 
   const results: MarketData[] = [];
+  let skipped = false;
+  let reason: string | undefined;
 
-  // Fetch from Finnhub (batch request)
   if (finnhubSymbols.length > 0) {
-    const finnhubResults = await fetchFromFinnhub(finnhubSymbols);
-    results.push(...finnhubResults);
+    const finnhubResult = await fetchFromFinnhub(finnhubSymbols);
+    if (finnhubResult.skipped) {
+      skipped = true;
+      reason = finnhubResult.reason;
+    }
+    results.push(...finnhubResult.data);
     options.onBatch?.(results);
   }
 
-  // Fetch indices/commodities from Yahoo (parallel)
   if (yahooSymbols.length > 0) {
     const yahooResults = await Promise.all(
       yahooSymbols.map(s => fetchFromYahoo(s.symbol, s.name, s.display))
@@ -159,10 +175,10 @@ export async function fetchMultipleStocks(
     lastSuccessfulResults = results;
   }
 
-  return results.length > 0 ? results : lastSuccessfulResults;
+  const data = results.length > 0 ? results : lastSuccessfulResults;
+  return { data, skipped, reason };
 }
 
-// Legacy single-symbol function (still used by some components)
 export async function fetchStockQuote(
   symbol: string,
   name: string,
@@ -173,8 +189,8 @@ export async function fetchStockQuote(
     return result || { symbol, name, display, price: null, change: null };
   }
 
-  const results = await fetchFromFinnhub([{ symbol, name, display }]);
-  return results[0] || { symbol, name, display, price: null, change: null };
+  const result = await fetchFromFinnhub([{ symbol, name, display }]);
+  return result.data[0] || { symbol, name, display, price: null, change: null };
 }
 
 export async function fetchCrypto(): Promise<CryptoData[]> {

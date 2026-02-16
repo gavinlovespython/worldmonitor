@@ -3618,6 +3618,31 @@ a.prediction-link:hover {
   text-align: center;
 }
 
+.config-error-message {
+  color: #ffd27c;
+  font-size: 10px;
+  padding: 8px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.config-error-settings-btn {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 10px;
+  font-size: 9px;
+  color: #ffd27c;
+  background: rgba(255, 210, 124, 0.1);
+  border: 1px solid rgba(255, 210, 124, 0.3);
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.config-error-settings-btn:hover {
+  background: rgba(255, 210, 124, 0.2);
+}
+
 /* Modal */
 .modal-overlay {
   position: fixed;

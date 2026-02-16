@@ -162,11 +162,18 @@ export class RuntimeConfigPanel extends Panel {
       const availableFeatures = RUNTIME_FEATURES.filter((feature) => isFeatureAvailable(feature.id)).length;
       const missingFeatures = Math.max(0, totalFeatures - availableFeatures);
       const configuredCount = Object.keys(snapshot.secrets).length;
+
+      if (missingFeatures === 0 && configuredCount >= totalFeatures) {
+        this.hide();
+        return;
+      }
+
       const alertTitle = configuredCount > 0
         ? (missingFeatures > 0 ? 'Some features need API keys' : 'Desktop settings configured')
         : 'Configure API keys to unlock features';
       const alertClass = missingFeatures > 0 ? 'warn' : 'ok';
 
+      this.show();
       this.content.innerHTML = `
         <section class="runtime-alert runtime-alert-${alertClass}">
           <h3>${alertTitle}</h3>

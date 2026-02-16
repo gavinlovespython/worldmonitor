@@ -1,4 +1,6 @@
 import { escapeHtml } from '../utils/sanitize';
+import { isDesktopRuntime } from '../services/runtime';
+import { invokeTauri } from '../services/tauri-bridge';
 
 export interface PanelOptions {
   id: string;
@@ -292,6 +294,18 @@ export class Panel {
 
   public showError(message = 'Failed to load data'): void {
     this.content.innerHTML = `<div class="error-message">${escapeHtml(message)}</div>`;
+  }
+
+  public showConfigError(message: string): void {
+    const settingsBtn = isDesktopRuntime()
+      ? '<button type="button" class="config-error-settings-btn">Open Settings</button>'
+      : '';
+    this.content.innerHTML = `<div class="config-error-message">${escapeHtml(message)}${settingsBtn}</div>`;
+    if (isDesktopRuntime()) {
+      this.content.querySelector('.config-error-settings-btn')?.addEventListener('click', () => {
+        void invokeTauri<void>('open_settings_window_command').catch(() => {});
+      });
+    }
   }
 
   public setCount(count: number): void {

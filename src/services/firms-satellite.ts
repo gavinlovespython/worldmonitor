@@ -27,11 +27,14 @@ export interface FireRegionStats {
 
 const FIRMS_API = '/api/firms-fires';
 
-// Fetch fires for all monitored regions
-export async function fetchAllFires(days: number = 1): Promise<{
+export interface FiresFetchResult {
   regions: Record<string, FireDataPoint[]>;
   totalCount: number;
-}> {
+  skipped?: boolean;
+  reason?: string;
+}
+
+export async function fetchAllFires(days: number = 1): Promise<FiresFetchResult> {
   try {
     const res = await fetch(`${FIRMS_API}?days=${days}`);
     if (!res.ok) {
@@ -39,6 +42,9 @@ export async function fetchAllFires(days: number = 1): Promise<{
       return { regions: {}, totalCount: 0 };
     }
     const data = await res.json();
+    if (data.skipped) {
+      return { regions: {}, totalCount: 0, skipped: true, reason: data.reason || 'NASA_FIRMS_API_KEY not configured' };
+    }
     return { regions: data.regions || {}, totalCount: data.totalCount || 0 };
   } catch (e) {
     console.warn('[FIRMS] Fetch failed:', e);

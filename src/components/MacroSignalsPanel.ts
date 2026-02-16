@@ -16,6 +16,7 @@ interface MacroSignalData {
     fearGreed: { status: string; value: number | null; history: Array<{ value: number; date: string }> };
   };
   meta: { qqqSparkline: number[] };
+  unavailable?: boolean;
 }
 
 function sparklineSvg(data: number[], width = 80, height = 24, color = '#4fc3f7'): string {
@@ -102,6 +103,11 @@ export class MacroSignalsPanel extends Panel {
 
     if (this.error || !this.data) {
       this.showError(this.error || 'No data');
+      return;
+    }
+
+    if (this.data.unavailable) {
+      this.showError('Upstream API unavailable — will retry automatically');
       return;
     }
 

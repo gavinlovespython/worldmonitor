@@ -2,6 +2,19 @@
 
 All notable changes to World Monitor are documented here.
 
+## [2.3.6] - 2026-02-16
+
+### Fixed
+
+- **Windows console window**: Hide the `node.exe` console window that appeared alongside the desktop app on Windows
+
+## [2.3.5] - 2026-02-16
+
+### Changed
+
+- **Panel error messages**: Differentiated error messages per panel so users see context-specific guidance instead of generic failures
+- **Desktop config auto-hide**: Desktop configuration panel automatically hides on web deployments where it is not relevant
+
 ## [2.3.4] - 2026-02-16
 
 ### Fixed

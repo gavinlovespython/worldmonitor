@@ -7,7 +7,7 @@ AI-powered real-time global intelligence dashboard aggregating news, markets, ge
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat&logo=vite&logoColor=white)
 ![D3.js](https://img.shields.io/badge/D3.js-F9A03C?style=flat&logo=d3.js&logoColor=white)
-![Version](https://img.shields.io/badge/version-2.1.4-blue)
+![Version](https://img.shields.io/badge/version-2.3.6-blue)
 
 ![World Monitor Dashboard](../new-world-monitor.png)
 
@@ -41,13 +41,13 @@ The primary variant focuses on geopolitical intelligence, military tracking, and
 |-------|---------|
 | **AI Insights** | LLM-synthesized world brief with focal point detection |
 | **AI Strategic Posture** | Theater-level military force aggregation with strike capability assessment |
-| **Country Instability Index** | Real-time stability scores for 20 monitored countries |
+| **Country Instability Index** | Real-time stability scores for 22 monitored countries |
 | **Strategic Risk Overview** | Composite risk score combining all intelligence modules |
 | **Infrastructure Cascade** | Dependency analysis for cables, pipelines, and chokepoints |
 | **Live Intelligence** | GDELT-powered topic feeds (Military, Cyber, Nuclear, Sanctions) |
 
 ### News Coverage
-80+ curated sources across geopolitics, defense, energy, think tanks, and regional news (Middle East, Africa, Latin America, Asia-Pacific).
+100+ curated sources across geopolitics, defense, energy, think tanks, and regional news (Middle East, Africa, Latin America, Asia-Pacific).
 
 ---
 
@@ -156,7 +156,7 @@ Layers are organized into logical groups for efficient monitoring:
 **Transport**
 | Layer | Description |
 |-------|-------------|
-| **Ships (AIS)** | Live vessel tracking via AIS with chokepoint monitoring and 61 strategic ports* |
+| **Ships (AIS)** | Live vessel tracking via AIS with chokepoint monitoring and 83 strategic ports* |
 | **Delays** | FAA airport delay status and ground stops |
 
 *\*AIS data via [AISStream.io](https://aisstream.io) uses terrestrial receivers with stronger coverage in European/Atlantic waters. Middle East, Asia, and open ocean coverage is limited. Satellite AIS providers (Spire, Kpler) offer global coverage but require commercial licenses.*
@@ -182,7 +182,7 @@ Beyond raw data feeds, the dashboard provides synthesized intelligence panels:
 |-------|---------|
 | **AI Strategic Posture** | Theater-level military aggregation with strike capability analysis |
 | **Strategic Risk Overview** | Composite risk score combining all intelligence modules |
-| **Country Instability Index** | Real-time stability scores for 20 monitored countries |
+| **Country Instability Index** | Real-time stability scores for 22 monitored countries |
 | **Infrastructure Cascade** | Dependency analysis for cables, pipelines, and chokepoints |
 | **Live Intelligence** | GDELT-powered topic feeds (Military, Cyber, Nuclear, Sanctions) |
 | **Intel Feed** | Curated defense and security news sources |
@@ -256,6 +256,7 @@ Embedded YouTube live streams from major news networks with channel switching:
 | **Euronews** | European perspective |
 | **DW News** | German international broadcaster |
 | **France 24** | French global news |
+| **CNBC** | Business & financial markets |
 | **Al Arabiya** | Middle East news (Arabic perspective) |
 | **Al Jazeera** | Middle East & international news |
 
@@ -910,16 +911,16 @@ Pin state persists across sessions via localStorage.
 
 ## Country Instability Index (CII)
 
-The dashboard maintains a **real-time instability score** for 20 strategically significant countries. Rather than relying on static risk ratings, the CII dynamically reflects current conditions based on multiple input streams.
+The dashboard maintains a **real-time instability score** for 22 strategically significant countries. Rather than relying on static risk ratings, the CII dynamically reflects current conditions based on multiple input streams.
 
 ### Monitored Countries (Tier 1)
 
 | Region | Countries |
 |--------|-----------|
-| **Americas** | United States, Venezuela |
+| **Americas** | United States, Brazil, Venezuela |
 | **Europe** | Germany, France, United Kingdom, Poland |
 | **Eastern Europe** | Russia, Ukraine |
-| **Middle East** | Iran, Israel, Saudi Arabia, Turkey, Syria, Yemen |
+| **Middle East** | Iran, Israel, Saudi Arabia, Turkey, Syria, Yemen, UAE |
 | **Asia-Pacific** | China, Taiwan, North Korea, India, Pakistan, Myanmar |
 
 ### Three Component Scores
@@ -1562,7 +1563,7 @@ Vessels are identified as military through multiple methods:
 | 232-235 | UK | Royal Navy |
 | 226-228 | France | Marine Nationale |
 
-**Known Vessel Database**: A curated database of 50+ named vessels enables positive identification when AIS transmits vessel names:
+**Known Vessel Database**: A curated database of 25+ named vessels enables positive identification when AIS transmits vessel names:
 
 | Category | Tracked Vessels |
 |----------|-----------------|
@@ -3294,7 +3295,7 @@ src/
 │   ├── feeds.ts              # 70+ RSS feeds, source tiers, regional sources
 │   ├── geo.ts                # 30+ hotspots, conflicts, 55 cables, waterways, spaceports, minerals
 │   ├── pipelines.ts          # 88 oil & gas pipelines
-│   ├── ports.ts              # 61 strategic ports worldwide
+│   ├── ports.ts              # 83 strategic ports worldwide
 │   ├── bases-expanded.ts     # 220+ military bases
 │   ├── ai-datacenters.ts     # 313 AI clusters (filtered to 111)
 │   ├── airports.ts           # 30 monitored US airports
@@ -3440,7 +3441,7 @@ Aggregates **70+ RSS feeds** from major news outlets, government sources, and sp
 - **Nuclear**: 100+ power plants, weapons labs, enrichment facilities
 - **AI Infrastructure**: 111 major compute clusters (≥10k GPUs)
 - **Strategic Waterways**: 8 critical chokepoints
-- **Ports**: 61 strategic ports (container, oil/LNG, naval, chokepoint)
+- **Ports**: 83 strategic ports (container, oil/LNG, naval, chokepoint)
 
 ### Live APIs
 - **USGS**: Earthquake feed (M4.5+ global)

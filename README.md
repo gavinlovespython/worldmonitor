@@ -111,7 +111,7 @@ Both variants run from a single codebase — switch between them with one click.
 - Undersea cables with landing points
 - Oil & gas pipelines
 - AI datacenters (111 major clusters)
-- 84 strategic ports across 6 types (container, oil, LNG, naval, mixed, bulk) with throughput rankings
+- 83 strategic ports across 6 types (container, oil, LNG, naval, mixed, bulk) with throughput rankings
 - Internet outages (Cloudflare Radar)
 - Critical mineral deposits
 - NASA FIRMS satellite fire detection (VIIRS thermal hotspots)
@@ -167,11 +167,11 @@ Both variants run from a single codebase — switch between them with one click.
 
 ### Desktop Application (Tauri)
 
-- **Native desktop app** for macOS and Windows — packages the full dashboard with a local Node.js sidecar that runs all 45+ API handlers locally
+- **Native desktop app** for macOS and Windows — packages the full dashboard with a local Node.js sidecar that runs all 60+ API handlers locally
 - **OS keychain integration** — API keys stored in the system credential manager (macOS Keychain, Windows Credential Manager), never in plaintext files
 - **Token-authenticated sidecar** — a unique session token prevents other local processes from accessing the sidecar on localhost. Generated per launch using randomized hashing
 - **Cloud fallback** — when a local API handler fails or is missing, requests transparently fall through to the cloud deployment (worldmonitor.app) with origin headers stripped
-- **Settings window** — dedicated configuration UI (Cmd+,) for managing 15 API keys with validation, signup links, and feature-availability indicators
+- **Settings window** — dedicated configuration UI (Cmd+,) for managing 17 API keys with validation, signup links, and feature-availability indicators
 - **Verbose debug mode** — toggle traffic logging with persistent state across restarts. View the last 200 requests with timing, status codes, and error details
 - **DevTools toggle** — Cmd+Alt+I opens the embedded web inspector for debugging
 
@@ -486,7 +486,7 @@ API calls to WorldPop are batched concurrently (max 10 parallel requests) to han
 
 ### Strategic Port Infrastructure
 
-84 strategic ports are cataloged across six types, reflecting their role in global trade and military posture:
+83 strategic ports are cataloged across six types, reflecting their role in global trade and military posture:
 
 | Type | Count | Examples |
 |------|-------|---------|
@@ -639,7 +639,7 @@ Feeds also carry a **propaganda risk rating** and **state affiliation flag**. St
 
 ## Edge Function Architecture
 
-World Monitor uses 45+ Vercel Edge Functions as a lightweight API layer. Each edge function handles a single data source concern — proxying, caching, or transforming external APIs. This architecture avoids a monolithic backend while keeping API keys server-side:
+World Monitor uses 60+ Vercel Edge Functions as a lightweight API layer. Each edge function handles a single data source concern — proxying, caching, or transforming external APIs. This architecture avoids a monolithic backend while keeping API keys server-side:
 
 - **RSS Proxy** — domain-allowlisted proxy for 100+ feeds, preventing CORS issues and hiding origin servers. Feeds from domains that block Vercel IPs are automatically routed through the Railway relay.
 - **AI Pipeline** — Groq and OpenRouter edge functions with Redis deduplication, so identical headlines across concurrent users only trigger one LLM call. The classify-event endpoint pauses its queue on 500 errors to avoid wasting API quota.
@@ -659,7 +659,7 @@ World Monitor runs on three platforms that work together:
 ```
 ┌─────────────────────────────────────┐
 │          Vercel (Edge)              │
-│  45+ edge functions · static SPA   │
+│  60+ edge functions · static SPA   │
 │  CORS allowlist · Redis cache       │
 │  AI pipeline · market analytics     │
 │  CDN caching (s-maxage) · PWA host  │
@@ -669,7 +669,7 @@ World Monitor runs on three platforms that work together:
            │  ┌───────────────────────────────────┐
            │  │     Tauri Desktop (Rust + Node)    │
            │  │  OS keychain · Token-auth sidecar  │
-           │  │  45+ local API handlers · gzip     │
+           │  │  60+ local API handlers · gzip     │
            │  │  Cloud fallback · Traffic logging   │
            │  └───────────────────────────────────┘
            │
@@ -711,7 +711,7 @@ The Tauri desktop app wraps the dashboard in a native window with a local Node.j
                       ▼
 ┌─────────────────────────────────────────────────┐
 │         Node.js Sidecar (port 46123)            │
-│  45+ API handlers · Gzip compression            │
+│  60+ API handlers · Gzip compression            │
 │  Cloud fallback · Traffic logging                │
 │  Verbose debug mode · Circuit breakers           │
 └─────────────────────┬───────────────────────────┘
@@ -725,7 +725,7 @@ The Tauri desktop app wraps the dashboard in a native window with a local Node.j
 
 ### Secret Management
 
-API keys are stored in the operating system's credential manager (macOS Keychain, Windows Credential Manager) — never in plaintext config files. At sidecar launch, all 15 supported secrets are read from the keyring, trimmed, and injected as environment variables. Empty or whitespace-only values are skipped.
+API keys are stored in the operating system's credential manager (macOS Keychain, Windows Credential Manager) — never in plaintext config files. At sidecar launch, all 17 supported secrets are read from the keyring, trimmed, and injected as environment variables. Empty or whitespace-only values are skipped.
 
 Secrets can also be updated at runtime without restarting the sidecar: saving a key in the Settings window triggers a `POST /api/local-env-update` call that hot-patches `process.env` and clears the module cache so handlers pick up the new value immediately.
 
@@ -836,7 +836,7 @@ The AI summarization pipeline adds content-based deduplication: headlines are ha
 git clone https://github.com/koala73/worldmonitor.git
 cd worldmonitor
 npm install
-vercel dev       # Runs frontend + all 45+ API edge functions
+vercel dev       # Runs frontend + all 60+ API edge functions
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
@@ -869,7 +869,7 @@ See [`.env.example`](./.env.example) for the complete list with registration lin
 
 ## Self-Hosting
 
-World Monitor relies on **45+ Vercel Edge Functions** in the `api/` directory for RSS proxying, data caching, and API key isolation. Running `npm run dev` alone starts only the Vite frontend — the edge functions won't execute, and most panels (news feeds, markets, AI summaries) will be empty.
+World Monitor relies on **60+ Vercel Edge Functions** in the `api/` directory for RSS proxying, data caching, and API key isolation. Running `npm run dev` alone starts only the Vite frontend — the edge functions won't execute, and most panels (news feeds, markets, AI summaries) will be empty.
 
 ### Option 1: Deploy to Vercel (Recommended)
 
@@ -880,7 +880,7 @@ npm install -g vercel
 vercel          # Follow prompts to link/create project
 ```
 
-Add your API keys in the Vercel dashboard under **Settings → Environment Variables**, then visit your deployment URL. The free Hobby plan supports all 45+ edge functions.
+Add your API keys in the Vercel dashboard under **Settings → Environment Variables**, then visit your deployment URL. The free Hobby plan supports all 60+ edge functions.
 
 ### Option 2: Local Development with Vercel CLI
 
@@ -939,7 +939,7 @@ Set `WS_RELAY_URL` (server-side, HTTPS) and `VITE_WS_RELAY_URL` (client-side, WS
 | **Market APIs** | Yahoo Finance (equities, forex, crypto), CoinGecko (stablecoins), mempool.space (BTC hashrate), alternative.me (Fear & Greed) |
 | **Threat Intel APIs** | abuse.ch (Feodo Tracker, URLhaus), AlienVault OTX, AbuseIPDB, C2IntelFeeds |
 | **Economic APIs** | FRED (Federal Reserve), EIA (Energy), Finnhub (stock quotes) |
-| **Deployment** | Vercel Edge Functions (45+ endpoints) + Railway (WebSocket relay) + Tauri (desktop) + PWA (installable) |
+| **Deployment** | Vercel Edge Functions (60+ endpoints) + Railway (WebSocket relay) + Tauri (desktop) + PWA (installable) |
 | **Data** | 100+ RSS feeds, ADS-B transponders, AIS maritime data, VIIRS satellite imagery, 8 live YouTube streams |
 
 ---
@@ -984,7 +984,7 @@ Desktop release details, signing hooks, variant outputs, and clean-machine valid
 
 ## Roadmap
 
-- [x] 45+ API edge functions for programmatic access
+- [x] 60+ API edge functions for programmatic access
 - [x] Dual-site variant system (geopolitical + tech)
 - [x] Market intelligence (macro signals, ETF flows, stablecoin peg monitoring)
 - [x] Railway relay for WebSocket and blocked-domain proxying

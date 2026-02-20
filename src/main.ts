@@ -59,6 +59,7 @@ Sentry.init({
     /Can't find variable: _0x/,
     /WKWebView was deallocated/,
     /Unexpected end of input/,
+    /window\.android\.\w+ is not a function/,
   ],
   beforeSend(event) {
     const msg = event.exception?.values?.[0]?.value ?? '';

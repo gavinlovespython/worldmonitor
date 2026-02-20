@@ -63,6 +63,9 @@ export class Panel {
   private onTouchMove: ((e: TouchEvent) => void) | null = null;
   private onTouchEnd: (() => void) | null = null;
   private onDocMouseUp: (() => void) | null = null;
+  private readonly contentDebounceMs = 150;
+  private pendingContentHtml: string | null = null;
+  private contentDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(options: PanelOptions) {
     this.panelId = options.id;
@@ -286,7 +289,7 @@ export class Panel {
   }
 
   public showLoading(message = t('common.loading')): void {
-    this.content.innerHTML = `
+    this.setContentImmediate(`
       <div class="panel-loading">
         <div class="panel-loading-radar">
           <div class="panel-radar-sweep"></div>
@@ -294,18 +297,18 @@ export class Panel {
         </div>
         <div class="panel-loading-text">${escapeHtml(message)}</div>
       </div>
-    `;
+    `);
   }
 
   public showError(message = t('common.failedToLoad')): void {
-    this.content.innerHTML = `<div class="error-message">${escapeHtml(message)}</div>`;
+    this.setContentImmediate(`<div class="error-message">${escapeHtml(message)}</div>`);
   }
 
   public showConfigError(message: string): void {
     const settingsBtn = isDesktopRuntime()
       ? `<button type="button" class="config-error-settings-btn">${t('components.panel.openSettings')}</button>`
       : '';
-    this.content.innerHTML = `<div class="config-error-message">${escapeHtml(message)}${settingsBtn}</div>`;
+    this.setContentImmediate(`<div class="config-error-message">${escapeHtml(message)}${settingsBtn}</div>`);
     if (isDesktopRuntime()) {
       this.content.querySelector('.config-error-settings-btn')?.addEventListener('click', () => {
         void invokeTauri<void>('open_settings_window_command').catch(() => { });
@@ -329,7 +332,32 @@ export class Panel {
   }
 
   public setContent(html: string): void {
-    this.content.innerHTML = html;
+    if (this.pendingContentHtml === html || this.content.innerHTML === html) {
+      return;
+    }
+
+    this.pendingContentHtml = html;
+    if (this.contentDebounceTimer) {
+      clearTimeout(this.contentDebounceTimer);
+    }
+
+    this.contentDebounceTimer = setTimeout(() => {
+      if (this.pendingContentHtml !== null) {
+        this.setContentImmediate(this.pendingContentHtml);
+      }
+    }, this.contentDebounceMs);
+  }
+
+  private setContentImmediate(html: string): void {
+    if (this.contentDebounceTimer) {
+      clearTimeout(this.contentDebounceTimer);
+      this.contentDebounceTimer = null;
+    }
+
+    this.pendingContentHtml = null;
+    if (this.content.innerHTML !== html) {
+      this.content.innerHTML = html;
+    }
   }
 
   public show(): void {
@@ -399,6 +427,12 @@ export class Panel {
    * Clean up event listeners and resources
    */
   public destroy(): void {
+    if (this.contentDebounceTimer) {
+      clearTimeout(this.contentDebounceTimer);
+      this.contentDebounceTimer = null;
+    }
+    this.pendingContentHtml = null;
+
     if (this.tooltipCloseHandler) {
       document.removeEventListener('click', this.tooltipCloseHandler);
       this.tooltipCloseHandler = null;

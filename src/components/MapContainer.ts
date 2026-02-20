@@ -91,6 +91,18 @@ export class MapContainer {
     }
   }
 
+  private initSvgMap(logMessage: string): void {
+    console.log(logMessage);
+    this.useDeckGL = false;
+    this.deckGLMap = null;
+    this.container.classList.remove('deckgl-mode');
+    this.container.classList.add('svg-mode');
+    // DeckGLMap mutates DOM early during construction. If initialization throws,
+    // clear partial deck.gl nodes before creating the SVG fallback.
+    this.container.innerHTML = '';
+    this.svgMap = new MapComponent(this.container, this.initialState);
+  }
+
   private init(): void {
     if (this.useDeckGL) {
       console.log('[MapContainer] Initializing deck.gl map (desktop mode)');
@@ -102,16 +114,10 @@ export class MapContainer {
         });
       } catch (error) {
         console.warn('[MapContainer] DeckGL initialization failed, falling back to SVG map', error);
-        this.useDeckGL = false;
-        this.deckGLMap = null;
-        this.container.classList.remove('deckgl-mode');
-        this.container.classList.add('svg-mode');
-        this.svgMap = new MapComponent(this.container, this.initialState);
+        this.initSvgMap('[MapContainer] Initializing SVG map (DeckGL fallback mode)');
       }
     } else {
-      console.log('[MapContainer] Initializing SVG map (mobile/fallback mode)');
-      this.container.classList.add('svg-mode');
-      this.svgMap = new MapComponent(this.container, this.initialState);
+      this.initSvgMap('[MapContainer] Initializing SVG map (mobile/fallback mode)');
     }
   }
 
